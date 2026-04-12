@@ -49,3 +49,15 @@ hs_err_pid*
 *.log
 *.tmp
 *.temp
+
+### Node.js ###
+node_modules/
+dist/
+npm-debug.log*
+
+### SQLite ###
+backend/data/*.db
+
+### Env ###
+.env
+.env.local
