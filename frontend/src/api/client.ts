@@ -8,7 +8,7 @@ import type {
   HistoryItem,
 } from '../types';
 
-const api = axios.create({ baseURL: '/api' });
+const api = axios.create({ baseURL: (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api' });
 
 export const getDomains = (): Promise<Domain[]> =>
   api.get<Domain[]>('/domains').then(r => r.data);
