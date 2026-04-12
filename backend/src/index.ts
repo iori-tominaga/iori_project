@@ -6,9 +6,10 @@ import answersRouter   from './routes/answers';
 import statsRouter     from './routes/stats';
 
 const app  = express();
-const PORT = 3001;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS ?? 'http://localhost:5173').split(',');
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: FRONTEND_ORIGINS }));
 app.use(express.json());
 
 app.use('/api/domains',   domainsRouter);

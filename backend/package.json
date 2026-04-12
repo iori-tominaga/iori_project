@@ -2,10 +2,14 @@
   "name": "jstqb-backend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "ts-node src/index.ts",
     "seed": "ts-node src/seed.ts",
     "build": "tsc",
+    "build:prod": "tsc && node dist/seed.js",
     "start": "node dist/index.js"
   },
   "dependencies": {

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: jstqb-backend
+    env: node
+    plan: free
+    region: singapore
+    buildCommand: cd backend && npm install && npm run build:prod
+    startCommand: cd backend && npm start
+    envVars:
+      - key: FRONTEND_ORIGINS
+        value: https://iori-tominaga.github.io,http://localhost:5173
