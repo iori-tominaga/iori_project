@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { saveSession } from '../api/client'
 import type { QuizResult, QuizSettings } from '../types'
 
 interface ResultsState {
@@ -26,8 +27,15 @@ export default function Results() {
   const navigate  = useNavigate()
   const state     = location.state as ResultsState | null
 
+  const saved = useRef(false)
+
   useEffect(() => {
-    if (!state) navigate('/', { replace: true })
+    if (!state) { navigate('/', { replace: true }); return }
+    if (!saved.current && state.results.length > 0) {
+      saved.current = true
+      const correct = state.results.filter(r => r.isCorrect).length
+      saveSession(state.results.length, correct)
+    }
   }, [state, navigate])
 
   if (!state) return null

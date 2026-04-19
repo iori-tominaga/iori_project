@@ -1,17 +1,73 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getStats, getHistory } from '../api/client'
-import type { StatsResponse, HistoryItem } from '../types'
+import { getStats, getHistory, getSessions } from '../api/client'
+import type { StatsResponse, HistoryItem, SessionRecord } from '../types'
+
+const PASS_LINE = 65
+
+function AccuracyGraph({ sessions }: { sessions: SessionRecord[] }) {
+  if (sessions.length < 2) {
+    return (
+      <p className="text-xs text-gray-400 text-center py-6">
+        グラフはセッション2回以上で表示されます
+      </p>
+    )
+  }
+
+  const W = 320, H = 160, PX = 32, PY = 16
+  const innerW = W - PX * 2
+  const innerH = H - PY * 2
+
+  const pts = sessions.map((s, i) => ({
+    x: PX + (i / (sessions.length - 1)) * innerW,
+    y: PY + innerH - (s.accuracy / 100) * innerH,
+    s,
+  }))
+
+  const passY = PY + innerH - (PASS_LINE / 100) * innerH
+  const polyline = pts.map(p => `${p.x},${p.y}`).join(' ')
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
+      {/* 目盛り線 */}
+      {[0, 25, 50, 75, 100].map(v => {
+        const y = PY + innerH - (v / 100) * innerH
+        return (
+          <g key={v}>
+            <line x1={PX} y1={y} x2={W - PX} y2={y} stroke="#e5e7eb" strokeWidth="1" />
+            <text x={PX - 4} y={y + 4} fontSize="9" fill="#9ca3af" textAnchor="end">{v}%</text>
+          </g>
+        )
+      })}
+
+      {/* 合格ライン */}
+      <line x1={PX} y1={passY} x2={W - PX} y2={passY} stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 3" />
+      <text x={W - PX + 2} y={passY + 4} fontSize="9" fill="#f59e0b">65%</text>
+
+      {/* 折れ線 */}
+      <polyline points={polyline} fill="none" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" />
+
+      {/* ドット＆ラベル */}
+      {pts.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r="4" fill={p.s.accuracy >= PASS_LINE ? '#6366f1' : '#ef4444'} />
+          <text x={p.x} y={H - 2} fontSize="9" fill="#9ca3af" textAnchor="middle">{p.s.label}</text>
+        </g>
+      ))}
+    </svg>
+  )
+}
 
 export default function Stats() {
   const navigate = useNavigate()
   const [stats,     setStats]     = useState<StatsResponse | null>(null)
   const [history,   setHistory]   = useState<HistoryItem[]>([])
+  const [sessions,  setSessions]  = useState<SessionRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getStats(), getHistory(20)])
-      .then(([s, h]) => { setStats(s); setHistory(h) })
+    Promise.all([getStats(), getHistory(20), getSessions()])
+      .then(([s, h, ss]) => { setStats(s); setHistory(h); setSessions(ss) })
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -55,6 +111,19 @@ export default function Stats() {
             </div>
           </div>
         )}
+
+        {/* 正答率の推移グラフ */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="font-bold text-gray-700 mb-1">正答率の推移</h2>
+          <p className="text-xs text-gray-400 mb-4">セッションごとの正答率（点線：合格ライン65%）</p>
+          <AccuracyGraph sessions={sessions} />
+          {sessions.length >= 2 && (
+            <div className="flex justify-between text-xs text-gray-400 mt-2">
+              <span>計 {sessions.length} セッション</span>
+              <span>最新: {sessions[sessions.length - 1].accuracy}%</span>
+            </div>
+          )}
+        </div>
 
         {/* 分野別正答率 */}
         {stats && (
