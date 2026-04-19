@@ -5,11 +5,13 @@ import type {
   AnswerResponse,
   StatsResponse,
   HistoryItem,
+  SessionRecord,
 } from '../types';
 import { DOMAINS, ALL_QUESTIONS } from '../data/questions';
 
 // ── localStorage ──────────────────────────────────────────────────────────
 const STORAGE_KEY = 'jstqb_answer_history';
+const SESSION_KEY = 'jstqb_session_history';
 
 interface StoredAnswer {
   id: number;
@@ -161,6 +163,28 @@ export const getStats = (): Promise<StatsResponse> => {
   });
 
   return Promise.resolve({ total_answered, total_correct, accuracy_rate, domain_stats });
+};
+
+export const saveSession = (total: number, correct: number): void => {
+  const now = new Date();
+  const date = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+  const label = now.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+  const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const record: SessionRecord = { id: now.getTime(), date, label, total, correct, accuracy };
+  try {
+    const sessions = JSON.parse(localStorage.getItem(SESSION_KEY) ?? '[]') as SessionRecord[];
+    sessions.push(record);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+  } catch { /* ignore */ }
+};
+
+export const getSessions = (): Promise<SessionRecord[]> => {
+  try {
+    const sessions = JSON.parse(localStorage.getItem(SESSION_KEY) ?? '[]') as SessionRecord[];
+    return Promise.resolve(sessions);
+  } catch {
+    return Promise.resolve([]);
+  }
 };
 
 export const getHistory = (limit = 20): Promise<HistoryItem[]> => {

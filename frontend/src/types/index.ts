@@ -71,3 +71,12 @@ export interface HistoryItem {
   is_correct: number;
   answered_at: string;
 }
+
+export interface SessionRecord {
+  id: number;
+  date: string;
+  label: string;
+  total: number;
+  correct: number;
+  accuracy: number;
+}
